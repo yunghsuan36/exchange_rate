@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>匯率查詢</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        #chart-container {
+            max-width: 800px;
+            margin: auto;
+            padding-top: 20px;
+        }
+        #exchangeRateChart {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+    <h1>匯率查詢</h1>
+
+    <div class="d-flex justify-content-center">
+        <div class="btn-group" role="group" aria-label="Currency buttons">
+            <button id="loadUSDChart" class="btn btn-primary">美元USD匯率</button>
+            <button id="loadCNYChart" class="btn btn-secondary">人民幣CNY匯率</button>
+            <button id="loadJPYChart" class="btn btn-success">日圓JPY匯率</button>
+            <button id="loadEURChart" class="btn btn-danger">歐元EUR匯率</button>
+            <button id="loadAUDChart" class="btn btn-warning">澳幣AUD匯率</button>
+        </div>
+    </div>
+
+    <div id="chart-container">
+        <canvas id="exchangeRateChart"></canvas>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let chartInstance = null;
+
+        function loadChart(currency) {
+            fetch(`/getRates?currency=${currency}`)
+                .then(response => response.json())
+                .then(rates => {
+                    if (!Array.isArray(rates)) {
+                        console.error('data error:', rates);
+                        return;
+                    }
+
+                    if (chartInstance) {
+                        chartInstance.destroy();
+                    }
+
+                    const labels = rates.map(rate => rate.date);
+                    const data = rates.map(rate => parseFloat(rate.rate));
+
+                    const ctx = document.getElementById('exchangeRateChart').getContext('2d');
+
+                    document.getElementById('exchangeRateChart').style.display = 'block';
+
+                    chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: `${currency} 匯率`,
+                                data: data,
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            layout: {
+                                padding: {
+                                    left: 50,
+                                    right: 50
+                                }
+                            },
+                            plugins: {
+                                datalabels: {
+                                    align: 'top',
+                                    anchor: 'end',
+                                    color: '#000',
+                                    font: {
+                                        weight: 'bold'
+                                    },
+                                    formatter: function(value, context) {
+                                        return value.toFixed(2);
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: '日期'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: '匯率'
+                                    }
+                                }
+                            }
+                        },
+                        plugins: [ChartDataLabels]
+                    });
+                })
+                .catch(error => console.error('error rates:', error));
+        }
+
+        document.getElementById('loadUSDChart').addEventListener('click', function () {
+            loadChart('USD');
+        });
+        document.getElementById('loadCNYChart').addEventListener('click', function () {
+            loadChart('CNY');
+        });
+        document.getElementById('loadJPYChart').addEventListener('click', function () {
+            loadChart('JPY');
+        });
+        document.getElementById('loadEURChart').addEventListener('click', function () {
+            loadChart('EUR');
+        });
+        document.getElementById('loadAUDChart').addEventListener('click', function () {
+            loadChart('AUD');
+        });
+    });
+</script>
+</body>
+</html>
