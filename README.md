@@ -10,7 +10,7 @@
 
 ### 1. clone project
 ```bash
-git clone https://github.com/yunghsuan36/exchange_rate_project.git
+git clone https://github.com/yunghsuan36/exchange_rate.git
 ```
 
 ### 2. properties setting
